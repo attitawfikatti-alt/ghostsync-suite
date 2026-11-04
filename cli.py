@@ -23,9 +23,9 @@ def menu():
         os.system("clear")
         print(BANNER)
         print("\033[93m[1]\033[0m تدقيق الشبكة المحلية والأجهزة المتصلة")
-        print("\033[93m[2]\033[0m تشفير ملف وإيداعه في الخزنة")
+        print("\033[93m[2]\033[0m تشفير ملف أو مجلد وإيداعه في الخزنة")
         print("\033[93m[3]\033[0m استعراض محتويات الخزنة المشفرة")
-        print("\033[93m[4]\033[0m فك تشفير ملف من الخزنة")
+        print("\033[93m[4]\033[0m فك تشفير ملف/مجلد من الخزنة")
         print("\033[93m[5]\033[0m تحليل أمني ذكي لتقرير الشبكة (AI Security Audit)")
         print("\033[93m[6]\033[0m مزامنة الخزنة المشفرة إلى السحابة (Rclone)")
         print("\033[91m[0]\033[0m خروج")
@@ -39,7 +39,6 @@ def menu():
             input("\nاضغط Enter للمتابعة...")
         elif choice == "2":
             path = input("\nأدخل مسار الملف أو المجلد المراد تشفيره: ").strip()
-            path = os.path.expanduser(path)
             encrypt_path(path)
             input("\nاضغط Enter للمتابعة...")
         elif choice == "3":
@@ -82,5 +81,39 @@ def menu():
         else:
             input("\nخيار غير صالح. اضغط Enter للمحاولة مجدداً...")
 
+def handle_cli_args():
+    if len(sys.argv) < 2:
+        menu()
+        return
+
+    cmd = sys.argv[1].lower()
+    if cmd in ["audit", "-a"]:
+        data = run_audit()
+        print(f"\n[✓] تم انتهاء التدقيق: تم اكتشاف {len(data)} جهاز.")
+    elif cmd in ["encrypt", "-e"]:
+        if len(sys.argv) < 3:
+            print("الاستخدام: ghostsync encrypt <path>")
+            sys.exit(1)
+        encrypt_path(sys.argv[2])
+    elif cmd in ["decrypt", "-d"]:
+        if len(sys.argv) < 3:
+            print("الاستخدام: ghostsync decrypt <filename.enc>")
+            sys.exit(1)
+        target = sys.argv[2]
+        full_path = os.path.join(VAULT_DIR, target) if not os.path.exists(target) else target
+        decrypt_file(full_path)
+    elif cmd in ["sync", "-s"]:
+        sync_vault_to_cloud()
+    elif cmd in ["ai", "--ai"]:
+        data = run_audit()
+        print(analyze_audit_report(data))
+    elif cmd in ["list", "-l"]:
+        files = list_vault()
+        for f in files:
+            print(f)
+    else:
+        print(f"أمر غير معروف: {cmd}")
+        print("الأوامر المتاحة: audit, encrypt <path>, decrypt <file>, sync, ai, list")
+
 if __name__ == "__main__":
-    menu()
+    handle_cli_args()
