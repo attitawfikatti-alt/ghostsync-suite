@@ -1,67 +1,79 @@
 import os
 import json
+import datetime
 import requests
+from core.config import GEMINI_API_KEY, REPORTS_DIR, VAULT_DIR
 from core.logger import log_info, log_warn, log_error
+from modules.vault import encrypt_path
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+def generate_local_heuristics(audit_data):
+    issues = []
+    adb_devices = [d["ip"] for d in audit_data if 5555 in d.get("open_ports", [])]
+    ssh_devices = [d["ip"] for d in audit_data if any(p in d.get("open_ports", []) for p in [22, 8022])]
 
-def local_heuristic_analysis(audit_data):
-    """تحليل محلي سريع في حال عدم توفر اتصال بالإنترنت أو مفتاح API"""
-    report = ["\n[تحليل استدلالي محلي]:"]
-    for item in audit_data:
-        ip = item.get("ip")
-        ports = item.get("open_ports", [])
-        if 5555 in ports:
-            report.append(f"• تحذير حرج: الجهاز {ip} يفتح منفذ تصحيح أندرويد (ADB 5555). الجهاز معرض للاختراق والتحكم الكامل بدون مصادقة!")
-        if 8022 in ports or 22 in ports:
-            report.append(f"• تنبيه أمني: الجهاز {ip} يفتح خدمة SSH. تأكد من تعطيل مصادقة كلمة المرور والاعتماد كلياً على المفاتيح (Key-based).")
-        if 80 in ports or 443 in ports:
-            report.append(f"• ملاحظة: الجهاز {ip} يقدم واجهة ويب (HTTP/HTTPS) - غالباً ما يكون المودم/الراوتر أو كاميرا مراقبة.")
-    if len(report) == 1:
-        report.append("• الحالة العامة: جميع الأجهزة المفحوصة لا تكشف منافذ حساسة شائعة.")
-    return "\n".join(report)
+    if adb_devices:
+        issues.append(f"[تحذير حرج] تم اكتشاف منافذ ADB مفتوحة بدون تشفير على الأجهزة: {', '.join(adb_devices)}")
+    if ssh_devices:
+        issues.append(f"[ملاحظة] تم العثور على خوادم SSH نشطة على الأجهزة: {', '.join(ssh_devices)}")
 
-def analyze_audit_report(audit_data):
+    total = len(audit_data)
+    summary = f"تقرير فحص محلي (Fallback):\n- إجمالي الأجهزة: {total}\n"
+    if issues:
+        summary += "\n".join(issues)
+    else:
+        summary += "لم يتم رصد ثغرات ظاهرة في المنافذ القياسية المفحوصة."
+    return summary
+
+def analyze_audit_report(audit_data, save_to_vault=True):
     if not audit_data:
-        log_warn("لا توجد بيانات تدقيق للتحليل.")
-        return "لا توجد أجهزة مفحوصة."
+        return "لا توجد بيانات شبكة للتحليل."
 
-    log_info("بدء معالجة التقرير الأمني...")
-    
-    # التحقق من وجود مفتاح API للتحليل العميق
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_content = ""
+
     if not GEMINI_API_KEY:
-        log_warn("المتغير GEMINI_API_KEY غير معين. سيتم الاعتماد على المحرك الاستدلالي المحلي.")
-        return local_heuristic_analysis(audit_data)
+        log_warn("مفتاح GEMINI_API_KEY غير موجود في المتغيرات. جاري استخدام التحليل المحلي الهيورستي.")
+        report_content = generate_local_heuristics(audit_data)
+    else:
+        log_info("إرسال بيانات الفحص إلى محرك التحليل الأمني الذكي...")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        
+        prompt = f"""أنت خبير أمني مختص في أمن الشبكات والأنظمة المضمنة. حلل نتائج الفحص التالية بدقة وأعطِ تقييماً شاملاً للمخاطر وتوصيات عملية للحماية:
+{json.dumps(audit_data, indent=2, ensure_ascii=False)}
+"""
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        }
+        
+        try:
+            res = requests.post(url, json=payload, timeout=25)
+            if res.status_code == 200:
+                data = res.json()
+                report_content = data["candidates"][0]["content"]["parts"][0]["text"]
+            else:
+                log_error(f"فشل الاتصال بمحرك التحليل الذكي (رمز: {res.status_code}). الاعتماد على التحليل المحلي.")
+                report_content = generate_local_heuristics(audit_data)
+        except Exception as e:
+            log_error(f"خطأ أثناء طلب التحليل الذكي: {e}")
+            report_content = generate_local_heuristics(audit_data)
 
-    prompt = (
-        "أنت مهندس أمن شبكات متخصص. حلل نتائج فحص الشبكة التالية لبيئة شبكة محلية (LAN):\n"
-        f"{json.dumps(audit_data, indent=2)}\n\n"
-        "المطلوب باختصار ودقة:\n"
-        "1. تقييم مستوى المخاطر لكل عنوان IP.\n"
-        "2. تحديد أي خدمات حساسة (مثل ADB 5555 أو SSH أو واجهات الويب).\n"
-        "3. خطوات علاجية فورية قابلة للتنفيذ لتأمين الأجهزة المعرضة للخطر."
-    )
+    # حفظ وتشفير التقرير داخل الخزنة
+    if save_to_vault:
+        raw_report_path = os.path.join(REPORTS_DIR, f"audit_report_{timestamp}.txt")
+        try:
+            with open(raw_report_path, "w", encoding="utf-8") as f:
+                f.write(f"=== تقرير تدقيق أمني: {timestamp} ===\n\n")
+                f.write(report_content)
+            
+            # تشفير الملف وإيداعه في الخزنة
+            if encrypt_path(raw_report_path):
+                log_info(f"تم تشفير التقرير وإيداعه في الخزنة: audit_report_{timestamp}.txt.enc")
+                # حذف النسخة غير المشفرة لحماية البيانات
+                if os.path.exists(raw_report_path):
+                    os.remove(raw_report_path)
+        except Exception as e:
+            log_error(f"تعذر حفظ التقرير في الخزنة: {e}")
 
-    payload = {
-        "contents": [{
-            "parts": [{"text": prompt}]
-        }]
-    }
-
-    try:
-        response = requests.post(
-            API_URL,
-            headers={"Content-Type": "application/json"},
-            json=payload,
-            timeout=15
-        )
-        if response.status_code == 200:
-            result = response.json()
-            return result["candidates"][0]["content"]["parts"][0]["text"]
-        else:
-            log_error(f"خطأ في الاتصال بالواجهة (كود {response.status_code}). سيتم استخدام التحليل المحلي.")
-            return local_heuristic_analysis(audit_data)
-    except Exception as e:
-        log_error(f"تعذر الاتصال بخدمة الذكاء: {e}")
-        return local_heuristic_analysis(audit_data)
+    return report_content
