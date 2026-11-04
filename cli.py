@@ -8,6 +8,7 @@ from modules.sync_engine import sync_vault_to_cloud
 from modules.backup import export_encrypted_key, restore_encrypted_key
 from modules.reporter import export_audit_html
 from core.log_viewer import view_logs
+from core.security_guard import enforce_permissions
 from core.auth import verify_pin, change_pin
 from core.config import VAULT_DIR
 
@@ -166,4 +167,5 @@ def handle_cli_args():
         print("الأوامر المتاحة: audit, scan-all, encrypt, decrypt, sync, backup-key, change-pin, ai, list")
 
 if __name__ == "__main__":
+    enforce_permissions()
     handle_cli_args()
