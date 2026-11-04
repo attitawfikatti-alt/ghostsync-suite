@@ -50,3 +50,31 @@ def export_encrypted_key(output_dir="/sdcard/Download"):
     except Exception as e:
         log_error(f"فشل تصدير المفتاح: {e}")
         return False
+
+def restore_encrypted_key(backup_file_path):
+    backup_file_path = os.path.expanduser(backup_file_path)
+    if not os.path.exists(backup_file_path):
+        log_error(f"ملف النسخة الاحتياطية غير موجود: {backup_file_path}")
+        return False
+
+    password = getpass.getpass("أدخل كلمة مرور فك تشفير المفتاح: ").strip()
+    try:
+        with open(backup_file_path, "rb") as f:
+            data = f.read()
+
+        salt = data[:16]
+        encrypted_payload = data[16:]
+
+        derived = derive_key_from_password(password, salt)
+        fernet = Fernet(derived)
+        decrypted_key = fernet.decrypt(encrypted_payload)
+
+        with open(KEY_PATH, "wb") as f:
+            f.write(decrypted_key)
+        os.chmod(KEY_PATH, 0o600)
+
+        log_info("تمت استعادة مفتاح الخزنة بنجاح وتعيين الأذونات الآمنة.")
+        return True
+    except Exception as e:
+        log_error(f"فشل استعادة المفتاح (تأكد من صحة كلمة المرور): {e}")
+        return False

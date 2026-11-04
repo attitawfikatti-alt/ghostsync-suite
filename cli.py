@@ -5,7 +5,7 @@ from modules.net_audit import run_audit
 from modules.vault import encrypt_path, decrypt_file, list_vault
 from modules.ai_engine import analyze_audit_report
 from modules.sync_engine import sync_vault_to_cloud
-from modules.backup import export_encrypted_key
+from modules.backup import export_encrypted_key, restore_encrypted_key
 from core.auth import verify_pin, change_pin
 from core.config import VAULT_DIR
 
@@ -125,6 +125,11 @@ def handle_cli_args():
         decrypt_file(full_path)
     elif cmd in ["sync", "-s"]:
         sync_vault_to_cloud()
+    elif cmd in ["restore-key"]:
+        if len(sys.argv) < 3:
+            print("الاستخدام: ghostsync restore-key <path_to_backup.enc>")
+            sys.exit(1)
+        restore_encrypted_key(sys.argv[2])
     elif cmd in ["backup-key"]:
         export_encrypted_key()
     elif cmd in ["change-pin"]:
