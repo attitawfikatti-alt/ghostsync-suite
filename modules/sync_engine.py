@@ -46,3 +46,23 @@ def sync_vault_to_cloud(remote_target="ghostdrive:GhostSync_Vault"):
     except Exception as e:
         log_error(f"حدث خطأ أثناء تنفيذ rclone: {e}")
         return False
+
+def check_cloud_connection(remote="ghostdrive:"):
+    log_info(f"جاري فحص الاتصال بالخادم السحابي ({remote})...")
+    try:
+        res = subprocess.run(
+            ["rclone", "about", remote],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=10
+        )
+        if res.returncode == 0:
+            log_info("الاتصال السحابي نشط ومعتمد بنجاح.")
+            return True
+        else:
+            log_warn(f"تعذر الوصول للسحابة أو انتهت صلاحية الجلسة: {res.stderr.strip()}")
+            return False
+    except Exception as e:
+        log_error(f"فشل فحص الاتصال بالسحابة: {e}")
+        return False
