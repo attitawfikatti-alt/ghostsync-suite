@@ -2,7 +2,7 @@
 import os
 import sys
 from modules.net_audit import run_audit
-from modules.vault import encrypt_file, decrypt_file, list_vault
+from modules.vault import encrypt_path, decrypt_file, list_vault
 from modules.ai_engine import analyze_audit_report
 from modules.sync_engine import sync_vault_to_cloud
 from core.config import VAULT_DIR
@@ -38,9 +38,9 @@ def menu():
             last_audit_data = run_audit()
             input("\nاضغط Enter للمتابعة...")
         elif choice == "2":
-            path = input("\nأدخل مسار الملف المراد تشفيره: ").strip()
+            path = input("\nأدخل مسار الملف أو المجلد المراد تشفيره: ").strip()
             path = os.path.expanduser(path)
-            encrypt_file(path)
+            encrypt_path(path)
             input("\nاضغط Enter للمتابعة...")
         elif choice == "3":
             print("\n=== محتويات الخزنة ===")
