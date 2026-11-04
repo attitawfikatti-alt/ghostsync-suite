@@ -11,6 +11,7 @@ from core.log_viewer import view_logs
 from core.security_guard import enforce_permissions
 from modules.integrity import verify_vault_integrity
 from modules.sync_engine import check_cloud_connection
+from modules.benchmark import run_benchmark
 from core.auth import verify_pin, change_pin
 from core.config import VAULT_DIR
 
@@ -156,6 +157,8 @@ def handle_cli_args():
         verify_vault_integrity()
     elif cmd in ["check-cloud"]:
         check_cloud_connection()
+    elif cmd in ["benchmark", "bench", "speed"]:
+        run_benchmark()
     elif cmd in ["update"]:
         print("033[96m[~] جاري التحقق من تحديثات المستودع...033[0m")
         os.system("cd ~/ghostsync && git pull origin main && chmod +x ~/ghostsync/cli.py")
