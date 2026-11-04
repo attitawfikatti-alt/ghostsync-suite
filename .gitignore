@@ -4,3 +4,4 @@ storage/vault/*.dec
 logs/*.log
 *.txt
 .ghostsync_key
+.ghostsync_pin

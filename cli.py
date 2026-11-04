@@ -5,6 +5,7 @@ from modules.net_audit import run_audit
 from modules.vault import encrypt_path, decrypt_file, list_vault
 from modules.ai_engine import analyze_audit_report
 from modules.sync_engine import sync_vault_to_cloud
+from core.auth import verify_pin
 from core.config import VAULT_DIR
 
 BANNER = """\033[96m
@@ -83,10 +84,18 @@ def menu():
 
 def handle_cli_args():
     if len(sys.argv) < 2:
+        if not verify_pin():
+            sys.exit(1)
         menu()
         return
 
     cmd = sys.argv[1].lower()
+    
+    # العمليات المباشرة التي تتطلب تصريحاً أمنياً
+    if cmd in ["decrypt", "-d", "encrypt", "-e"]:
+        if not verify_pin():
+            sys.exit(1)
+
     if cmd in ["audit", "-a"]:
         data = run_audit()
         print(f"\n[✓] تم انتهاء التدقيق: تم اكتشاف {len(data)} جهاز.")
