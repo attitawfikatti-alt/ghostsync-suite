@@ -1,5 +1,6 @@
 import socket
 from core.logger import log_info, log_warn, log_error
+from core.notifier import send_alert
 
 COMMON_PORTS = [22, 80, 443, 5555, 8000, 8080, 8022, 9090]
 
@@ -85,4 +86,7 @@ def run_audit(subnet_prefix=None):
 
     print("=" * 55)
     log_info(f"اكتمل الفحص بنجاح. الأجهزة المكتشفة: {len(active_hosts)}")
+    adb_hosts = [h["ip"] for h in active_hosts if 5555 in h.get("open_ports", [])]
+    if adb_hosts:
+        send_alert("تحذير أمني حرج", f"تم رصد منافذ ADB مفتوحة على: {ad_hosts_str := ", ".join(adb_hosts)}")
     return active_hosts

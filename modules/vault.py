@@ -97,3 +97,20 @@ def list_vault():
     if not os.path.exists(VAULT_DIR):
         return []
     return [f for f in os.listdir(VAULT_DIR) if f.endswith(".enc")]
+
+def secure_shred(file_path, passes=2):
+    file_path = os.path.expanduser(file_path)
+    if not os.path.isfile(file_path):
+        return False
+    try:
+        size = os.path.getsize(file_path)
+        with open(file_path, "ba+", buffering=0) as f:
+            for _ in range(passes):
+                f.seek(0)
+                f.write(os.urandom(size))
+        os.remove(file_path)
+        log_info(f"تم المسح الآمن للملف الأصلي: {file_path}")
+        return True
+    except Exception as e:
+        log_error(f"فشل المسح الآمن: {e}")
+        return False

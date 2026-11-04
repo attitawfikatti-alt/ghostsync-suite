@@ -2,7 +2,7 @@
 import os
 import sys
 from modules.net_audit import run_audit
-from modules.vault import encrypt_path, decrypt_file, list_vault
+from modules.vault import encrypt_path, decrypt_file, list_vault, secure_shred
 from modules.ai_engine import analyze_audit_report
 from modules.sync_engine import sync_vault_to_cloud
 from modules.backup import export_encrypted_key, restore_encrypted_key
@@ -116,6 +116,8 @@ def handle_cli_args():
             print("الاستخدام: ghostsync encrypt <path>")
             sys.exit(1)
         encrypt_path(sys.argv[2])
+        if len(sys.argv) > 3 and sys.argv[3] == "--shred":
+            secure_shred(sys.argv[2])
     elif cmd in ["decrypt", "-d"]:
         if len(sys.argv) < 3:
             print("الاستخدام: ghostsync decrypt <filename.enc>")
