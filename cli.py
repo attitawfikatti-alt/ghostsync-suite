@@ -5,7 +5,8 @@ from modules.net_audit import run_audit
 from modules.vault import encrypt_path, decrypt_file, list_vault
 from modules.ai_engine import analyze_audit_report
 from modules.sync_engine import sync_vault_to_cloud
-from core.auth import verify_pin
+from modules.backup import export_encrypted_key
+from core.auth import verify_pin, change_pin
 from core.config import VAULT_DIR
 
 BANNER = """\033[96m
@@ -29,6 +30,8 @@ def menu():
         print("\033[93m[4]\033[0m فك تشفير ملف/مجلد من الخزنة")
         print("\033[93m[5]\033[0m تحليل أمني ذكي لتقرير الشبكة (AI Security Audit)")
         print("\033[93m[6]\033[0m مزامنة الخزنة المشفرة إلى السحابة (Rclone)")
+        print("\033[93m[7]\033[0m تصدير نسخة احتياطية مشفرة لمفتاح الخزنة")
+        print("\033[93m[8]\033[0m تغيير رمز الحماية (PIN)")
         print("\033[91m[0]\033[0m خروج")
         print("-" * 50)
         
@@ -76,6 +79,12 @@ def menu():
             print("\n" + "=" * 40)
             sync_vault_to_cloud()
             input("\nاضغط Enter للمتابعة...")
+        elif choice == "7":
+            export_encrypted_key()
+            input("\nاضغط Enter للمتابعة...")
+        elif choice == "8":
+            change_pin()
+            input("\nاضغط Enter للمتابعة...")
         elif choice == "0":
             print("\nإغلاق GhostSync... في أمان الله.")
             sys.exit(0)
@@ -90,15 +99,18 @@ def handle_cli_args():
         return
 
     cmd = sys.argv[1].lower()
-    
-    # العمليات المباشرة التي تتطلب تصريحاً أمنياً
-    if cmd in ["decrypt", "-d", "encrypt", "-e"]:
+    if cmd in ["decrypt", "-d", "encrypt", "-e", "backup-key", "change-pin"]:
         if not verify_pin():
             sys.exit(1)
 
     if cmd in ["audit", "-a"]:
         data = run_audit()
         print(f"\n[✓] تم انتهاء التدقيق: تم اكتشاف {len(data)} جهاز.")
+    elif cmd in ["scan-all", "--all"]:
+        data = run_audit()
+        report = analyze_audit_report(data, save_to_vault=True)
+        print(report)
+        sync_vault_to_cloud()
     elif cmd in ["encrypt", "-e"]:
         if len(sys.argv) < 3:
             print("الاستخدام: ghostsync encrypt <path>")
@@ -111,13 +123,12 @@ def handle_cli_args():
         target = sys.argv[2]
         full_path = os.path.join(VAULT_DIR, target) if not os.path.exists(target) else target
         decrypt_file(full_path)
-    elif cmd in ["scan-all", "--all"]:
-        data = run_audit()
-        report = analyze_audit_report(data, save_to_vault=True)
-        print(report)
-        sync_vault_to_cloud()
     elif cmd in ["sync", "-s"]:
         sync_vault_to_cloud()
+    elif cmd in ["backup-key"]:
+        export_encrypted_key()
+    elif cmd in ["change-pin"]:
+        change_pin()
     elif cmd in ["ai", "--ai"]:
         data = run_audit()
         print(analyze_audit_report(data))
@@ -127,7 +138,7 @@ def handle_cli_args():
             print(f)
     else:
         print(f"أمر غير معروف: {cmd}")
-        print("الأوامر المتاحة: audit, encrypt <path>, decrypt <file>, sync, ai, list")
+        print("الأوامر المتاحة: audit, scan-all, encrypt, decrypt, sync, backup-key, change-pin, ai, list")
 
 if __name__ == "__main__":
     handle_cli_args()
