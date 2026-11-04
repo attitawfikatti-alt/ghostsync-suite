@@ -12,6 +12,7 @@ from core.security_guard import enforce_permissions
 from modules.integrity import verify_vault_integrity
 from modules.sync_engine import check_cloud_connection
 from modules.benchmark import run_benchmark
+from modules.stats import get_vault_statistics
 from core.auth import verify_pin, change_pin
 from core.config import VAULT_DIR
 
@@ -157,6 +158,8 @@ def handle_cli_args():
         verify_vault_integrity()
     elif cmd in ["check-cloud"]:
         check_cloud_connection()
+    elif cmd in ["stats", "vault-stats", "disk"]:
+        get_vault_statistics()
     elif cmd in ["benchmark", "bench", "speed"]:
         run_benchmark()
     elif cmd in ["update"]:
