@@ -1,55 +1,84 @@
 import socket
 import subprocess
-from concurrent.futures import ThreadPoolExecutor
-from core.config import CRITICAL_PORTS, SCAN_TIMEOUT
-from core.logger import log_info, log_warn
+from core.logger import log_info, log_warn, log_error
 
-def check_port(ip, port):
+COMMON_PORTS = [22, 80, 443, 5555, 8000, 8080, 8022, 9090]
+
+def scan_port(ip, port, timeout=0.4):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(timeout)
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(SCAN_TIMEOUT)
-            if s.connect_ex((ip, port)) == 0:
-                return port
-    except Exception:
-        pass
-    return None
+        s.connect((ip, port))
+        s.close()
+        return True
+    except:
+        return False
 
-def scan_target(ip):
-    open_ports = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        results = executor.map(lambda p: check_port(ip, p), CRITICAL_PORTS)
-        open_ports = [p for p in results if p is not None]
-    return open_ports
+def audit_localhost():
+    log_info("بدء تدقيق المنافذ والخدمات المحلية (localhost)...")
+    open_local = []
+    for port in COMMON_PORTS:
+        if scan_port("127.0.0.1", port, timeout=0.2):
+            open_local.append(port)
+    return open_local
 
-def get_active_hosts():
-    hosts = []
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        res = subprocess.run(["ip", "neigh"], stdout=subprocess.PIPE, text=True)
-        for line in res.stdout.strip().split("\n"):
-            parts = line.split()
-            if len(parts) >= 5 and parts[4] != "FAILED":
-                hosts.append(parts[0])
+        s.connect(('8.8.8.8', 1))
+        ip = s.getsockname()[0]
     except Exception:
-        pass
-    return list(set(hosts))
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
 
-def run_audit():
-    log_info("بدء فحص الشبكة المحلية والأجهزة المتصلة...")
-    hosts = get_active_hosts()
-    if not hosts:
-        log_warn("لم يتم العثور على أجهزة نشطة في جدول الجوار (ARP). تأكد من اتصال Wi-Fi.")
-        return []
+def run_audit(subnet_prefix=None):
+    local_ip = get_local_ip()
+    log_info(f"عنوان IP المحلي للجهاز: {local_ip}")
 
-    log_info(f"تم رصد {len(hosts)} جهاز متصل. جاري تدقيق المنافذ المفتوحة...")
-    report = []
-    for ip in hosts:
-        open_p = scan_target(ip)
-        status = {"ip": ip, "open_ports": open_p}
-        report.append(status)
-        if 5555 in open_p:
-            log_warn(f"تنبيه أمني: المنفذ 5555 (ADB) مفتوح على الهدف {ip}!")
-        elif open_p:
-            log_info(f"الهدف {ip} يحتوي على منافذ مفتوحة: {open_p}")
-        else:
-            log_info(f"الهدف {ip}: لا توجد منافذ حرجة مكشوفة.")
-    return report
+    # فحص المنافذ المحلية
+    local_ports = audit_localhost()
+    if local_ports:
+        log_warn(f"منافذ مفتوحة محلياً على هذا الجهاز: {local_ports}")
+    else:
+        log_info("لم يتم رصد منافذ شائعة مفتوحة على الجهاز المحلي.")
+
+    if not subnet_prefix:
+        if local_ip == '127.0.0.1':
+            log_warn("الجهاز غير متصل بشبكة Wi-Fi محلية.")
+            return [{"ip": "127.0.0.1", "open_ports": local_ports, "is_local": True}]
+        parts = local_ip.split('.')
+        subnet_prefix = f"{parts[0]}.{parts[1]}.{parts[2]}."
+
+    log_info(f"بدء فحص النطاق المحلي: {subnet_prefix}1 إلى {subnet_prefix}254...")
+    active_hosts = []
+
+    # إدراج فحص الجهاز نفسه أولاً
+    active_hosts.append({
+        "ip": local_ip,
+        "open_ports": local_ports,
+        "is_local": True
+    })
+
+    # فحص الأجهزة المتصلة على نفس الشبكة (عينة سريعة لأول 30 عنواناً أو المنافذ الحيوية)
+    for i in range(1, 35):
+        target_ip = f"{subnet_prefix}{i}"
+        if target_ip == local_ip:
+            continue
+        
+        found_ports = []
+        for port in [5555, 8022, 22, 80]:
+            if scan_port(target_ip, port, timeout=0.15):
+                found_ports.append(port)
+
+        if found_ports:
+            log_info(f"جهاز نشط: {target_ip} | منافذ مفتوحة: {found_ports}")
+            active_hosts.append({
+                "ip": target_ip,
+                "open_ports": found_ports,
+                "is_local": False
+            })
+
+    log_info(f"اكتمل الفحص. إجمالي الأجهزة المسجلة: {len(active_hosts)}")
+    return active_hosts

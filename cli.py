@@ -111,6 +111,11 @@ def handle_cli_args():
         target = sys.argv[2]
         full_path = os.path.join(VAULT_DIR, target) if not os.path.exists(target) else target
         decrypt_file(full_path)
+    elif cmd in ["scan-all", "--all"]:
+        data = run_audit()
+        report = analyze_audit_report(data, save_to_vault=True)
+        print(report)
+        sync_vault_to_cloud()
     elif cmd in ["sync", "-s"]:
         sync_vault_to_cloud()
     elif cmd in ["ai", "--ai"]:
