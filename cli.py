@@ -7,6 +7,7 @@ from modules.ai_engine import analyze_audit_report
 from modules.sync_engine import sync_vault_to_cloud
 from modules.backup import export_encrypted_key, restore_encrypted_key
 from modules.reporter import export_audit_html
+from core.log_viewer import view_logs
 from core.auth import verify_pin, change_pin
 from core.config import VAULT_DIR
 
@@ -139,6 +140,15 @@ def handle_cli_args():
         data = run_audit()
         report_text = analyze_audit_report(data, save_to_vault=False)
         export_audit_html(data, report_text)
+    elif cmd in ["logs", "log"]:
+        level = None
+        if len(sys.argv) > 2:
+            arg = sys.argv[2].lower()
+            if "err" in arg:
+                level = "error"
+            elif "warn" in arg:
+                level = "warn"
+        view_logs(filter_level=level)
     elif cmd in ["update"]:
         print("033[96m[~] جاري التحقق من تحديثات المستودع...033[0m")
         os.system("cd ~/ghostsync && git pull origin main && chmod +x ~/ghostsync/cli.py")
