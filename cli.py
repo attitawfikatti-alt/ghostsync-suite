@@ -6,6 +6,7 @@ from modules.vault import encrypt_path, decrypt_file, list_vault, secure_shred
 from modules.ai_engine import analyze_audit_report
 from modules.sync_engine import sync_vault_to_cloud
 from modules.backup import export_encrypted_key, restore_encrypted_key
+from modules.reporter import export_audit_html
 from core.auth import verify_pin, change_pin
 from core.config import VAULT_DIR
 
@@ -134,6 +135,13 @@ def handle_cli_args():
         restore_encrypted_key(sys.argv[2])
     elif cmd in ["backup-key"]:
         export_encrypted_key()
+    elif cmd in ["export-html", "--html"]:
+        data = run_audit()
+        report_text = analyze_audit_report(data, save_to_vault=False)
+        export_audit_html(data, report_text)
+    elif cmd in ["update"]:
+        print("033[96m[~] جاري التحقق من تحديثات المستودع...033[0m")
+        os.system("cd ~/ghostsync && git pull origin main && chmod +x ~/ghostsync/cli.py")
     elif cmd in ["change-pin"]:
         change_pin()
     elif cmd in ["ai", "--ai"]:
