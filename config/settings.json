@@ -1,0 +1,27 @@
+{
+  "network": {
+    "default_timeout": 0.4,
+    "max_workers": 40,
+    "audit_ports": [
+      {"port": 53, "service": "DNS Resolver"},
+      {"port": 80, "service": "HTTP Control Panel"},
+      {"port": 443, "service": "HTTPS Secure Web"},
+      {"port": 5555, "service": "Wireless ADB"},
+      {"port": 8080, "service": "Alternative Web Proxy"}
+    ]
+  },
+  "storage": {
+    "reports_dir": "reports",
+    "vault_dir": "vault",
+    "keep_raw_reports": true
+  },
+  "ai": {
+    "enabled": true,
+    "model_hook": "gemini_agent.py"
+  },
+  "telegram": {
+    "enabled": false,
+    "bot_token": "YOUR_BOT_TOKEN",
+    "chat_id": "YOUR_CHAT_ID"
+  }
+}
