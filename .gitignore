@@ -1,0 +1,6 @@
+reports/
+vault/
+config/settings.json
+__pycache__/
+*.pyc
+*.gpg

@@ -1,0 +1,51 @@
+=== [GHOSTSYNC CRON START: 2026-11-03 23:21:31] ===
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/ghostsync/ghostsync.py", line 12, in <module>
+    from crypto_vault import CryptoVault
+  File "/data/data/com.termux/files/home/ghostsync/core/crypto_vault.py", line 4, in <module>
+    import gnupg
+ModuleNotFoundError: No module named 'gnupg'
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/ghostsync/ghostsync.py", line 12, in <module>
+    from crypto_vault import CryptoVault
+  File "/data/data/com.termux/files/home/ghostsync/core/crypto_vault.py", line 4, in <module>
+    import gnupg
+ModuleNotFoundError: No module named 'gnupg'
+[✔] Encrypted /data/data/com.termux/files/home/ghostsync/reports/scan_20261103_224556.md
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/ghostsync/ghostsync.py", line 12, in <module>
+    from crypto_vault import CryptoVault
+  File "/data/data/com.termux/files/home/ghostsync/core/crypto_vault.py", line 4, in <module>
+    import gnupg
+ModuleNotFoundError: No module named 'gnupg'
+=== [GHOSTSYNC CRON COMPLETE] ===
+
+=== [GHOSTSYNC CRON START: 2026-11-04 01:25:36] ===
+╭─────────────────────────────────────────────╮
+│ GhostSync-AI | Edge Sentinel & Secure Vault │
+╰─────────────────────────────────────────────╯
+  📡 نتائج فحص النطاق (192.168.1.0/24)   
+┏━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┓
+┃ عنوان IP ┃ المنافذ المفتوحة ┃ الخدمات ┃
+┡━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━┩
+└──────────┴──────────────────┴─────────┘
+╭────────── 🛡️ تقرير التقييم الأمني ───────────╮
+│ ✔ لم يتم رصد أي منافذ عالية الخطورة في الفحص │
+│ الحالي. الشبكة مستقرة ظاهرياً.                │
+╰──────────────────────────────────────────────╯
+✔ تم حفظ تقرير التدقيق (Markdown + HTML):
+/data/data/com.termux/files/home/ghostsync/repor
+ts/scan_20261104_012546.md
+╭─────────────────────────────────────────────╮
+│ GhostSync-AI | Edge Sentinel & Secure Vault │
+╰─────────────────────────────────────────────╯
+✔ تم التشفير بنجاح:
+/data/data/com.termux/files/home/ghostsync/vault
+/scan_20261104_012546.md.tar.gz.gpg
+[✔] Encrypted /data/data/com.termux/files/home/ghostsync/reports/scan_20261104_012546.md
+╭─────────────────────────────────────────────╮
+│ GhostSync-AI | Edge Sentinel & Secure Vault │
+╰─────────────────────────────────────────────╯
+الخزينة ضمن الحدود المسموحة، لم يتم حذف أي ملف.
+=== [GHOSTSYNC CRON COMPLETE] ===
+
