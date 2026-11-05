@@ -1,16 +1,3 @@
-        print("\n\033[94m-        elif choice == "7":
-            verify_vault_integrity()
-        elif choice == "8":
-            get_vault_statistics()
-        elif choice == "9":
-            run_benchmark()
-        elif choice == "10":
-            get_active_connections()-- أدوات التحليل والصيانة ---\033[0m")
-        print(" [7] فحص سلامة وتكامل الخزنة (Integrity Check)")
-        print(" [8] تحليل إحصائيات التخزين (Storage Stats)")
-        print(" [9] قياس سرعة المعالج والتشفير (Benchmark)")
-        print(" [10] مراقبة الاتصالات النشطة (Live Connections)")
-        print(" [0] خروج")#!/usr/bin/env python3
 import os
 import sys
 from modules.net_audit import run_audit
@@ -194,16 +181,3 @@ def handle_cli_args():
 if __name__ == "__main__":
     enforce_permissions()
     handle_cli_args()
-
-def update_suite():
-    print("\n\033[96m=== جلب التحديثات من GitHub (Auto-Update) ===\033[0m")
-    import subprocess
-    try:
-        res = subprocess.run(["git", "pull", "origin", "main"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        print(res.stdout)
-        if res.returncode == 0:
-            print("\033[92m[✓] تم تحديث GhostSync إلى آخر إصدار بنجاح.\033[0m")
-        else:
-            print(f"\033[91m[!] تعذر التحديث: {res.stderr}\033[0m")
-    except Exception as e:
-        print(f"\033[91m[!] خطأ أثناء الاتصال: {e}\033[0m")
