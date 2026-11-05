@@ -1,4 +1,16 @@
-#!/usr/bin/env python3
+        print("\n\033[94m-        elif choice == "7":
+            verify_vault_integrity()
+        elif choice == "8":
+            get_vault_statistics()
+        elif choice == "9":
+            run_benchmark()
+        elif choice == "10":
+            get_active_connections()-- أدوات التحليل والصيانة ---\033[0m")
+        print(" [7] فحص سلامة وتكامل الخزنة (Integrity Check)")
+        print(" [8] تحليل إحصائيات التخزين (Storage Stats)")
+        print(" [9] قياس سرعة المعالج والتشفير (Benchmark)")
+        print(" [10] مراقبة الاتصالات النشطة (Live Connections)")
+        print(" [0] خروج")#!/usr/bin/env python3
 import os
 import sys
 from modules.net_audit import run_audit
@@ -13,6 +25,7 @@ from modules.integrity import verify_vault_integrity
 from modules.sync_engine import check_cloud_connection
 from modules.benchmark import run_benchmark
 from modules.stats import get_vault_statistics
+from modules.conn_monitor import get_active_connections
 from core.auth import verify_pin, change_pin
 from core.config import VAULT_DIR
 
