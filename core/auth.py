@@ -15,11 +15,11 @@ def is_pin_set() -> bool:
 def setup_pin():
     print("\n\033[93m[!] إعداد رمز حماية جديد للمنظومة.\033[0m")
     while True:
-        p1 = getpass.getpass("أدخل رمز PIN جديد (4 أرقام أو أكثر): ").strip()
+        p1 = input("أدخل رمز PIN جديد (4 أرقام أو أكثر): ").strip()
         if len(p1) < 4:
             print("الرمز قصير جداً، يجب أن يتكون من 4 خانات على الأقل.")
             continue
-        p2 = getpass.getpass("أعد إدخال رمز PIN للتأكيد: ").strip()
+        p2 = input("أعد إدخال رمز PIN للتأكيد: ").strip()
         if p1 != p2:
             print("الرمزان غير متطابقين، حاول مجدداً.")
             continue
@@ -39,7 +39,7 @@ def verify_pin(max_attempts=3) -> bool:
 
     attempts = 0
     while attempts < max_attempts:
-        entered = getpass.getpass("\033[96mأدخل رمز PIN للدخول: \033[0m").strip()
+        entered = input("\033[96mأدخل رمز PIN للدخول: \033[0m").strip()
         if hash_pin(entered) == stored_hash:
             return True
         attempts += 1
